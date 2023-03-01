@@ -15,6 +15,7 @@ Content-Type:application/json
 ###
 
 PUT http://localhost:3000/movies/movieId/
+Content-Type:application/json
 {
   "directorId": 24,
   "movieName": "Thor",
