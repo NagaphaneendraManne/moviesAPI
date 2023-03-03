@@ -26,45 +26,29 @@ const initializeDBAndServer = async () => {
 };
 initializeDBAndServer();
 
-//API 1
 app.get("/movies/", async (request, response) => {
   const getMoviesQuery = `
-    SELECT * FROM movie;`;
+    SELECT
+      movie_name
+    FROM
+      movie;`;
   const moviesArray = await db.all(getMoviesQuery);
-  const convertDbObjectToResponseObject = (dbObject) => {
-    return {
-      movieName: dbObject.movie_name,
-    };
-  };
   response.send(
-    moviesArray.map((eachMovie) => convertDbObjectToResponseObject(eachMovie))
+    moviesArray.map((eachMovie) => ({ movieName: eachMovie.movie_name }))
   );
 });
 
-//API 2
-app.post("/movies/", async (request, response) => {
-  const movieDetails = request.body;
-  const { directorId, movieName, leadActor } = movieDetails;
-  const getAddMovieQuery = `
-    INSERT INTO
-      movie (director_id,movie_name,lead_actor)
-    VALUES
-      (
-        ${directorId},
-          ${movieName},
-         ${leadActor}
-         );`;
-  await db.run(getAddMovieQuery);
-  response.send("Movie Successfully Added");
-});
-
-//API 3
 app.get("/movies/:movieId/", async (request, response) => {
   const { movieId } = request.params;
   const getMovieQuery = `
-    SELECT * FROM movie WHERE movie_id = ${movieId};`;
+    SELECT 
+      *
+    FROM 
+      movie 
+    WHERE 
+      movie_id = ${movieId};`;
   const movie = await db.get(getMovieQuery);
-  const convertDbObjectToResponseObject = (dbObject) => {
+  const convertMovieDbObjectToResponseObject = (dbObject) => {
     return {
       movieId: dbObject.movie_id,
       directorId: dbObject.director_id,
@@ -72,67 +56,80 @@ app.get("/movies/:movieId/", async (request, response) => {
       leadActor: dbObject.lead_actor,
     };
   };
-  response.send(convertDbObjectToResponseObject(movie));
+  response.send(convertMovieDbObjectToResponseObject(movie));
 });
 
-//API 4
+app.post("/movies/", async (request, response) => {
+  const { directorId, movieName, leadActor } = request.body;
+  const postMovieQuery = `
+  INSERT INTO
+    movie ( director_id, movie_name, lead_actor)
+  VALUES
+    (${directorId}, '${movieName}', '${leadActor}');`;
+  await db.run(postMovieQuery);
+  response.send("Movie Successfully Added");
+});
+
 app.put("/movies/:movieId/", async (request, response) => {
+  const { directorId, movieName, leadActor } = request.body;
   const { movieId } = request.params;
-  const movieDetails = request.body;
-  const { directorId, movieName, leadActor } = movieDetails;
-  const getMovieQuery = `
-    UPDATE
-     movie
-     SET
-     director_id = '${directorId}',
-     movie_name = '${movieName}',
-     lead_actor = '${leadActor}'
-     WHERE movie_id = ${movieId};`;
-  await db.run(getMovieQuery);
+  const updateMovieQuery = `
+            UPDATE
+              movie
+            SET
+              director_id = ${directorId},
+              movie_name = '${movieName}',
+              lead_actor = '${leadActor}'
+            WHERE
+              movie_id = ${movieId};`;
+
+  await db.run(updateMovieQuery);
   response.send("Movie Details Updated");
 });
 
-//API 5
 app.delete("/movies/:movieId/", async (request, response) => {
   const { movieId } = request.params;
-  const getDeleteMovieQuery = `
-    DELETE FROM movie WHERE movie_id = ${movieId};`;
-  await db.run(getDeleteMovieQuery);
+  const deleteMovieQuery = `
+  DELETE FROM
+    movie
+  WHERE
+    movie_id = ${movieId};`;
+  await db.run(deleteMovieQuery);
   response.send("Movie Removed");
 });
 
-//API 6
 app.get("/directors/", async (request, response) => {
-  const getDirectorQuery = `
-    SELECT * FROM director;`;
-  const directorArray = await db.all(getDirectorQuery);
-  const convertDbObjectToResponseObject = (dbObject) => {
+  const getDirectorsQuery = `
+    SELECT
+      *
+    FROM
+      director;`;
+  const directorsArray = await db.all(getDirectorsQuery);
+  const convertDirectorDbObjectToResponseObject = (dbObject) => {
     return {
       directorId: dbObject.director_id,
       directorName: dbObject.director_name,
     };
   };
   response.send(
-    directorArray.map((eachDirector) =>
-      convertDbObjectToResponseObject(eachDirector)
+    directorsArray.map((eachDirector) =>
+      convertDirectorDbObjectToResponseObject(eachDirector)
     )
   );
 });
 
-//API 7
 app.get("/directors/:directorId/movies/", async (request, response) => {
   const { directorId } = request.params;
-  const getMovieQuery = `
-    SELECT movie_name FROM movie  WHERE director_id = ${directorId};`;
-  const moviesArray = await db.all(getMovieQuery);
-  const convertDbObjectToResponseObject = (dbObject) => {
-    return {
-      movieName: dbObject.movie_name,
-    };
-  };
+  const getDirectorMoviesQuery = `
+    SELECT
+      movie_name
+    FROM
+      movie
+    WHERE
+      director_id='${directorId}';`;
+  const moviesArray = await db.all(getDirectorMoviesQuery);
   response.send(
-    moviesArray.map((eachMovie) => convertDbObjectToResponseObject(eachMovie))
+    moviesArray.map((eachMovie) => ({ movieName: eachMovie.movie_name }))
   );
 });
-
 module.exports = app;
